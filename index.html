@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spanish Calendar Vocabulary Practice</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    .hidden { display: none; }
+    h1, h2 { color: #1E3A8A; }
+    .question { margin-bottom: 20px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);}
+    .options { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .option-btn {
+        padding: 10px 20px; border: none; border-radius: 8px;
+        background: #87CEFA; color: black;
+        cursor: pointer; transition: 0.3s;
+    }
+    .option-btn:hover { opacity: 0.85; }
+    .option-btn.correct { background: #4CAF50 !important; color: white; cursor: default; }
+    .option-btn.incorrect { background: #F44336 !important; color: white; cursor: default; }
+    input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 6px; width: 250px; }
+    .btn { padding: 12px 24px; font-size: 16px; border: none; border-radius: 10px; cursor: pointer; margin-top: 15px;}
+    .start-btn { background: #4CAF50; color: white; font-size: 20px; font-weight: bold; }
+    .restart-btn { background: #1E3A8A; color: white; }
+    #result { font-size: 18px; font-weight: bold; margin-top: 20px; }
+    #finalMessage { font-size: 20px; margin-top: 15px; color: #1E3A8A; }
+</style>
+</head>
+<body>
+
+<!-- First Window -->
+<div id="intro">
+    <h1>Spanish Calendar Vocabulary Practice</h1>
+    <p><strong>Instructions:</strong> Enter your name and grade to start the test. 
+    Answer each question carefully. Once you select an answer, it will turn <span style="color:green;">green if correct</span> or <span style="color:red;">red if incorrect</span>, and you cannot change it. 
+    At the end, your total score will be displayed. Good luck!</p>
+    <label>Name: <input type="text" id="studentName"></label><br><br>
+    <label>Grade: <input type="text" id="studentGrade"></label><br><br>
+    <button class="btn start-btn" onclick="startExam()">Start</button>
+</div>
+
+<!-- Second Window -->
+<div id="exam" class="hidden">
+    <h2 id="welcomeMessage"></h2>
+    <div id="questions"></div>
+    <button class="btn restart-btn" onclick="restartExam()">Restart</button>
+    <div id="result"></div>
+    <div id="finalMessage"></div>
+</div>
+
+<script>
+const questionsData = [
+    {q:"1. Multiple Choice<br>Which month comes after May?", type:"mc", options:["abril","junio","julio","agosto"], answer:["junio"]},
+    {q:'2. True or False<br>"El calendario" is a tool to organize days and months.', type:"tf", options:["True","False"], answer:["True"]},
+    {q:"3. Multiple Select<br>Select all months in the second semester:", type:"ms", options:["enero","julio","septiembre","diciembre","marzo"], answer:["julio","septiembre","diciembre"]},
+    {q:"4. Fill in the Blank<br>The day that comes after Sunday is ________.", type:"text", answer:["lunes"]},
+    {q:'5. Multiple Choice<br>Which word means "the year"?', type:"mc", options:["El día","La semana","El mes","El año"], answer:["El año"]},
+    {q:"6. Multiple Select<br>Which of these words refer to holidays or special days?", type:"ms", options:["El día festivo","La fecha","El fin de semana","Anteayer"], answer:["El día festivo","El fin de semana"]},
+    {q:'7. True or False<br>"Mañana" is the day before today.', type:"tf", options:["True","False"], answer:["False"]},
+    {q:'8. Multiple Choice<br>Which month starts with "F"?', type:"mc", options:["febrero","abril","enero","marzo"], answer:["febrero"]},
+    {q:"9. Fill in the Blank<br>The month between July and September is ________.", type:"text", answer:["agosto"]},
+    {q:'10. Multiple Choice<br>Which word means "weekend"?', type:"mc", options:["La semana","El fin de semana","La fecha","El calendario"], answer:["El fin de semana"]},
+    {q:"11. Multiple Select<br>Select the weekdays:", type:"ms", options:["lunes","sábado","martes","domingo","viernes"], answer:["lunes","martes","viernes"]},
+    {q:'12. True or False<br>"Ayer" is the day before today.', type:"tf", options:["True","False"], answer:["True"]},
+    {q:"13. Fill in the Blank<br>Today is Wednesday, the day before yesterday was ________.", type:"text", answer:["lunes"]},
+    {q:'14. Multiple Choice<br>Which word means "the date" in Spanish?', type:"mc", options:["El calendario","La fecha","El año","La semana"], answer:["La fecha"]},
+    {q:"15. Multiple Choice<br>What is the first day of the week in Spanish?", type:"mc", options:["domingo","lunes","sábado","viernes"], answer:["lunes"]},
+    {q:'16. Multiple Select<br>Select the months starting with "M":', type:"ms", options:["marzo","mayo","junio","agosto","diciembre"], answer:["marzo","mayo"]},
+    {q:'17. True or False<br>"La siguiente semana" means the week after this one.', type:"tf", options:["True","False"], answer:["True"]},
+    {q:"18. Fill in the Blank<br>A holiday is a day to ________ or celebrate.", type:"text", answer:["descansar"]},
+    {q:"19. Multiple Choice<br>Which month has the fewest days?", type:"mc", options:["marzo","febrero","abril","mayo"], answer:["febrero"]},
+    {q:'20. Multiple Choice<br>"Pasado mañana" refers to:', type:"mc", options:["the day after today","today","two days after today","yesterday"], answer:["two days after today"]}
+];
+
+let score = 0;
+let total = questionsData.length;
+let studentName = "";
+
+function shuffle(array) {
+    return array.sort(() => Math.random() - 0.5);
+}
+
+function startExam() {
+    studentName = document.getElementById("studentName").value || "Student";
+    const grade = document.getElementById("studentGrade").value || "";
+    document.getElementById("intro").classList.add("hidden");
+    document.getElementById("exam").classList.remove("hidden");
+    document.getElementById("welcomeMessage").innerText = `Welcome, ${studentName}! Let's begin the test.`;
+    loadQuestions();
+}
+
+function loadQuestions() {
+    score = 0;
+    document.getElementById("result").innerHTML = "";
+    document.getElementById("finalMessage").innerHTML = "";
+    const container = document.getElementById("questions");
+    container.innerHTML = "";
+
+    questionsData.forEach((q, index) => {
+        const div = document.createElement("div");
+        div.className = "question";
+        div.innerHTML = `<p>${q.q}</p>`;
+
+        if(q.type === "mc" || q.type === "tf") {
+            const opts = shuffle([...q.options]);
+            const optDiv = document.createElement("div");
+            optDiv.className = "options";
+            opts.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.className = "option-btn";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if(btn.classList.contains("correct") || btn.classList.contains("incorrect")) return;
+                    if(q.answer.includes(opt)) {
+                        btn.classList.add("correct");
+                        score++;
+                    } else {
+                        btn.classList.add("incorrect");
+                    }
+                    Array.from(optDiv.children).forEach(b => b.disabled = true);
+                    updateResult();
+                };
+                optDiv.appendChild(btn);
+            });
+            div.appendChild(optDiv);
+        }
+
+        else if(q.type === "ms") {
+            const opts = shuffle([...q.options]);
+            const optDiv = document.createElement("div");
+            optDiv.className = "options";
+            let selected = [];
+            opts.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.className = "option-btn";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if(selected.includes(opt)) return;
+                    selected.push(opt);
+                    if(q.answer.includes(opt)) {
+                        btn.classList.add("correct");
+                    } else {
+                        btn.classList.add("incorrect");
+                    }
+                    if(selected.length === q.answer.length) {
+                        let correctCount = selected.filter(x => q.answer.includes(x)).length;
+                        if(correctCount === q.answer.length) score++;
+                        Array.from(optDiv.children).forEach(b => b.disabled = true);
+                        updateResult();
+                    }
+                };
+                optDiv.appendChild(btn);
+            });
+            div.appendChild(optDiv);
+        }
+
+        else if(q.type === "text") {
+            const input = document.createElement("input");
+            input.type = "text";
+            input.placeholder = "Type your answer";
+            input.onchange = () => {
+                if(q.answer.includes(input.value.toLowerCase().trim())) {
+                    input.style.background = "#4CAF50"; input.style.color="white"; score++;
+                } else {
+                    input.style.background = "#F44336"; input.style.color="white";
+                }
+                input.disabled = true;
+                updateResult();
+            };
+            div.appendChild(input);
+        }
+
+        container.appendChild(div);
+    });
+}
+
+function updateResult() {
+    let incorrect = total - score;
+    document.getElementById("result").innerText = `Score: ${score} / ${total}`;
+    if(score + incorrect === total) {
+        document.getElementById("finalMessage").innerText = `${studentName}, you got ${score} correct answers and ${incorrect} incorrect answers.`;
+    }
+}
+
+function restartExam() {
+    loadQuestions();
+}
+</script>
+
+</body>
+</html>
